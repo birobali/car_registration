@@ -1,0 +1,85 @@
+version: '3.9'
+
+services:
+  api: &main_app
+    build:
+      context: .
+      dockerfile: ./deploy/Dockerfile
+      target: prod
+    image: car_registration:${CAR_REGISTRATION_VERSION:-latest}
+    restart: always
+    env_file:
+      - .env
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.car_registration.rule=PathPrefix(`/`)
+      - traefik.http.routers.car_registration.entrypoints=api
+      - traefik.http.routers.car_registration.service=car_registration
+      - traefik.http.services.car_registration.loadbalancer.server.port=${CAR_REGISTRATION_PORT:-8081}
+    networks:
+      - default
+      - traefik-shared
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      CAR_REGISTRATION_HOST: 0.0.0.0
+      CAR_REGISTRATION_DB_HOST: car_registration-db
+      CAR_REGISTRATION_DB_PORT: 5432
+      CAR_REGISTRATION_DB_USER: car_registration
+      CAR_REGISTRATION_DB_PASS: car_registration
+      CAR_REGISTRATION_DB_BASE: car_registration
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1'
+          memory: '1GB'
+  db:
+    image: postgres:13.8-bullseye
+    hostname: car_registration-db
+    environment:
+      POSTGRES_PASSWORD: "car_registration"
+      POSTGRES_USER: "car_registration"
+      POSTGRES_DB: "car_registration"
+    volumes:
+      - car_registration-db-data:/var/lib/postgresql/data
+#      - ./sql/create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
+    restart: always
+    healthcheck:
+      test: pg_isready -U car_registration
+      interval: 2s
+      timeout: 3s
+      retries: 40
+    ports:
+      - "5432:5432"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: '4GB'
+  reverse-proxy:
+    image: traefik:v3.0
+    command: --api.insecure=true --providers.docker --entrypoints.api.address=:${CAR_REGISTRATION_PORT:-8080}
+    ports:
+      - "8080:8081"
+    labels:
+      - traefik.enable=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - api
+      - db
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: '500MB'
+volumes:
+  car_registration-db-data:
+    name: car_registration-db-data
+
+networks:
+  # Network for traefik.
+  traefik-shared:
+    name: traefik-shared
