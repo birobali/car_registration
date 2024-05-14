@@ -4,7 +4,7 @@ services:
   api: &main_app
     build:
       context: .
-      dockerfile: ./deploy/Dockerfile
+      dockerfile: ./Dockerfile
       target: prod
     image: car_registration:${CAR_REGISTRATION_VERSION:-latest}
     restart: always
@@ -60,7 +60,7 @@ services:
           memory: '4GB'
   reverse-proxy:
     image: traefik:v3.0
-    command: --api.insecure=true --providers.docker --entrypoints.api.address=:${CAR_REGISTRATION_PORT:-8080}
+    command: --api.insecure=true --providers.docker --entrypoints.api.address=:${CAR_REGISTRATION_PORT:-8081}
     ports:
       - "8080:8081"
     labels:
@@ -80,6 +80,5 @@ volumes:
     name: car_registration-db-data
 
 networks:
-  # Network for traefik.
   traefik-shared:
     name: traefik-shared
