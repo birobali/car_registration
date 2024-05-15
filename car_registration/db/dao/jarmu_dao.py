@@ -1,3 +1,4 @@
+import uuid
 from typing import List
 
 from fastapi import Depends
@@ -17,6 +18,7 @@ class JarmuDAO:
 
     async def create_jarmu_model(
         self,
+        uuid: uuid.UUID,
         rendszam: str,
         tulajdonos: str,
         forgalmi_ervenyes: str,
@@ -25,9 +27,10 @@ class JarmuDAO:
         async with self.db_pool.connection() as connection:
             async with connection.cursor(binary=True) as cur:
                 await cur.execute(
-                    "INSERT INTO jarmu (rendszam, tulajdonos, forgalmi_ervenyes, adatok, szoveg) "
-                    "VALUES (%(rendszam)s, %(tulajdonos)s, %(forgalmi_ervenyes)s, %(adatok)s, %(szoveg)s);",
+                    "INSERT INTO jarmu (uuid, rendszam, tulajdonos, forgalmi_ervenyes, adatok, szoveg) "
+                    "VALUES (%(uuid)s, %(rendszam)s, %(tulajdonos)s, %(forgalmi_ervenyes)s, %(adatok)s, %(szoveg)s);",
                     params={
+                        "uuid": uuid,
                         "rendszam": rendszam,
                         "tulajdonos": tulajdonos,
                         "forgalmi_ervenyes": forgalmi_ervenyes,

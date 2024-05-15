@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Response, status
 from fastapi.param_functions import Depends
 
 from car_registration.db.dao.jarmu_dao import JarmuDAO
@@ -28,9 +28,15 @@ async def get_jarmu_model(
 @router.post("/jarmuvek", status_code=status.HTTP_201_CREATED)
 async def create_jarmu_model(
     new_jarmu_object: JarmuModelInputDTO,
+    response: Response,
     jarmu_dao: JarmuDAO = Depends(),
 ) -> None:
+    import uuid
+
+    uuid = uuid.uuid4()
+    response.headers["Location"] = f"/jarmuvek/{str(uuid)}"
     await jarmu_dao.create_jarmu_model(
+        uuid=uuid,
         rendszam=new_jarmu_object.rendszam,
         tulajdonos=new_jarmu_object.tulajdonos,
         forgalmi_ervenyes=new_jarmu_object.forgalmi_ervenyes,
