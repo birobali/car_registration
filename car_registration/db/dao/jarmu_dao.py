@@ -1,5 +1,5 @@
 import uuid
-from typing import List
+from typing import List, Optional
 
 from fastapi import Depends
 from psycopg.rows import class_row
@@ -64,7 +64,7 @@ class JarmuDAO:
                 )
                 return await res.fetchall()
 
-    async def get_jarmu(self, uuid: str) -> JarmuModel:
+    async def get_jarmu(self, uuid: str) -> Optional[JarmuModel]:
         async with self.db_pool.connection() as connection:
             async with connection.cursor(
                 binary=True,
@@ -76,7 +76,10 @@ class JarmuDAO:
                         "uuid": uuid,
                     },
                 )
-                return await res.fetchone()
+                result = await res.fetchone()
+                if result is None:
+                    raise ValueError("Not found")
+                return result
 
     async def get_jarmu_count(self) -> int:
         async with self.db_pool.connection() as connection:

@@ -1,3 +1,5 @@
+version: '3.9'
+
 services:
   api: &main_app
     build:
@@ -28,48 +30,13 @@ services:
       CAR_REGISTRATION_DB_PASS: car_registration
       CAR_REGISTRATION_DB_BASE: car_registration
     deploy:
-      replicas: 1
-      resources:
-        limits:
-          cpus: '1'
-          memory: '1GB'
-  api1: &main_app
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-      target: prod
-    image: car_registration:${CAR_REGISTRATION_VERSION:-latest}
-    restart: always
-    env_file:
-      - .env
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.car_registration.rule=PathPrefix(`/`)
-      - traefik.http.routers.car_registration.entrypoints=api
-      - traefik.http.routers.car_registration.service=car_registration
-      - traefik.http.services.car_registration.loadbalancer.server.port=${CAR_REGISTRATION_PORT:-8081}
-    networks:
-      - default
-      - traefik-shared
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      CAR_REGISTRATION_HOST: 0.0.0.0
-      CAR_REGISTRATION_DB_HOST: car_registration-db
-      CAR_REGISTRATION_DB_PORT: 5432
-      CAR_REGISTRATION_DB_USER: car_registration
-      CAR_REGISTRATION_DB_PASS: car_registration
-      CAR_REGISTRATION_DB_BASE: car_registration
-    deploy:
-      replicas: 1
+      replicas: 2
       resources:
         limits:
           cpus: '1'
           memory: '1GB'
   db:
     image: postgres:13.8-bullseye
-    command: -c 'max_connections=200'
     hostname: car_registration-db
     environment:
       POSTGRES_PASSWORD: "car_registration"
@@ -91,22 +58,23 @@ services:
         limits:
           cpus: '1'
           memory: '4GB'
-
-  nginx:
-    image: nginx:latest
+  reverse-proxy:
+    image: traefik:v3.0
+    command: --api.insecure=true --providers.docker --entrypoints.api.address=:${CAR_REGISTRATION_PORT:-8081}
+    ports:
+      - "8080:8081"
+    labels:
+      - traefik.enable=true
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - api
-      - api1
       - db
-    ports:
-      - "8080:8080"
     deploy:
       resources:
         limits:
           cpus: '1'
-          memory: '1GB'
+          memory: '500MB'
 volumes:
   car_registration-db-data:
     name: car_registration-db-data

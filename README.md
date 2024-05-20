@@ -1,6 +1,5 @@
 # car_registration
 
-This project was generated using fastapi_template.
 
 ## Poetry
 
@@ -15,8 +14,6 @@ poetry run python -m car_registration
 ```
 
 This will start the server on the configured host.
-
-You can find swagger documentation at `/api/docs`.
 
 You can read more about poetry here: https://python-poetry.org/
 
@@ -38,7 +35,7 @@ Like this:
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml --project-directory . up --build
 ```
 
-This command exposes the web application on port 8000, mounts current directory and enables autoreload.
+This command exposes the web application on port 8080, mounts current directory and enables autoreload.
 
 But you have to rebuild image every time you modify `poetry.lock` or `pyproject.toml` with this command:
 
@@ -84,7 +81,7 @@ in `car_registration.settings.Settings.Config`.
 An example of .env file:
 ```bash
 CAR_REGISTRATION_RELOAD="True"
-CAR_REGISTRATION_PORT="8000"
+CAR_REGISTRATION_PORT="8080"
 CAR_REGISTRATION_ENVIRONMENT="dev"
 ```
 

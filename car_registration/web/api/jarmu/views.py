@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Optional
 
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, HTTPException, Response, status
 from fastapi.param_functions import Depends
 
 from car_registration.db.dao.jarmu_dao import JarmuDAO
@@ -21,8 +21,12 @@ async def get_jarmu_count(
 async def get_jarmu_model(
     uuid: str,
     jarmu_dao: JarmuDAO = Depends(),
-) -> JarmuModel:
-    return await jarmu_dao.get_jarmu(uuid)
+) -> Optional[JarmuModel]:
+    try:
+        result = await jarmu_dao.get_jarmu(uuid)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return result
 
 
 @router.post("/jarmuvek", status_code=status.HTTP_201_CREATED)
