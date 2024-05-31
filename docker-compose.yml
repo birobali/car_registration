@@ -1,4 +1,4 @@
-version: '3.9'
+name: car_registration
 
 services:
   api: &main_app
